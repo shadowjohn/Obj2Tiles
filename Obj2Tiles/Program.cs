@@ -48,6 +48,8 @@ namespace Obj2Tiles
             string? destFolderDecimation = null;
             string? destFolderSplit = null;
 
+            
+
             try
             {
                
@@ -58,12 +60,18 @@ namespace Obj2Tiles
                 Console.WriteLine($" => Decimation stage with {opts.LODs} LODs");
                 sw.Start();
 
+
                 var decimateRes = await StagesFacade.Decimate(opts.Input, destFolderDecimation, opts.LODs);
+
+
+                //return;
 
                 Console.WriteLine(" ?> Decimation stage done in {0}", sw.Elapsed);
 
                 if (opts.StopAt == Stage.Decimation)
                     return;
+
+                
 
                 Console.WriteLine();
                 Console.WriteLine(

@@ -15,7 +15,11 @@ public static partial class StagesFacade
         var qualities = Enumerable.Range(0, lods - 1).Select(i => 1.0f - ((i + 1) / (float)lods)).ToArray();
 
         var sourceObjMesh = new ObjMesh();
+        
         sourceObjMesh.ReadFile(sourcePath);
+
+        //return null;
+
         var bounds = sourceObjMesh.Bounds;
 
         var fileName = Path.GetFileName(sourcePath);
@@ -24,8 +28,11 @@ public static partial class StagesFacade
 
         var destFiles = new List<string> { originalSourceFile };
 
-        var tasks = new List<Task>();
-        
+        //var tasks = new List<Task>();
+
+        Console.WriteLine("qualities.Length: " + qualities.Length.ToString());
+        //return null;
+        //單序就好
         for (var index = 0; index < qualities.Length; index++)
         {
             var quality = qualities[index];
@@ -36,12 +43,12 @@ public static partial class StagesFacade
 
             Console.WriteLine(" -> Decimating mesh {0} with quality {1:0.00}", fileName, quality);
 
-            tasks.Add(Task.Run(() => InternalDecimate(sourceObjMesh, destFile, quality)));
-            
+            //tasks.Add(Task.Run(() => InternalDecimate(sourceObjMesh, destFile, quality)));
+            InternalDecimate(sourceObjMesh, destFile, quality);
             destFiles.Add(destFile);
         }
 
-        await Task.WhenAll(tasks);
+        //await Task.WhenAll(tasks);
         Console.WriteLine(" ?> Decimation done");
         
         Console.WriteLine(" -> Copying obj dependencies");
@@ -77,11 +84,12 @@ public static partial class StagesFacade
         }
 
         var currentTriangleCount = 0;
+
         for (var i = 0; i < sourceSubMeshIndices.Length; i++)
         {
-            currentTriangleCount += sourceSubMeshIndices[i].Length / 3;
+            var subMeshLength = sourceSubMeshIndices[i].Length;
+            currentTriangleCount += subMeshLength / 3;
         }
-
         var targetTriangleCount = (int)Math.Ceiling(currentTriangleCount * quality);
         Console.WriteLine(" ?> Input: {0} vertices, {1} triangles (target {2})",
             sourceVertices.Length, currentTriangleCount, targetTriangleCount);
@@ -124,13 +132,16 @@ public static partial class StagesFacade
 
         destObjMesh.WriteFile(destPath);
 
-        var outputTriangleCount = 0;
+        int outputTriangleCount = 0;
+        
         for (var i = 0; i < destIndices.Length; i++)
         {
-            outputTriangleCount += (destIndices[i].Length / 3);
+            int subMeshLength = destIndices[i].Length;
+            outputTriangleCount += subMeshLength / 3;
+            currentTriangleCount += sourceSubMeshIndices[i].Length / 3;
         }
+        float reduction = (float)outputTriangleCount / currentTriangleCount;
 
-        var reduction = (float)outputTriangleCount / currentTriangleCount;
         var timeTaken = (float)stopwatch.Elapsed.TotalSeconds;
         Console.WriteLine(" ?> Output: {0} vertices, {1} triangles ({2} reduction; {3:0.0000} sec)",
             destVertices.Length, outputTriangleCount, reduction, timeTaken);

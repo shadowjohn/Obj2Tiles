@@ -27,6 +27,7 @@ SOFTWARE.
 #endregion
 
 using System.Globalization;
+using System.Text;
 using MeshDecimatorCore.Math;
 using Obj2Tiles.Library.Geometry;
 
@@ -327,16 +328,16 @@ namespace Obj2Tiles.Stages.Model
                     if (line.Length == 0 || line[0] == '#')
                         continue;
 
-                    string[] lineSplit = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    string[] lineSplit = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     string firstPart = lineSplit[0];
                     if (string.Equals(firstPart, "v"))
                     {
                         if (lineSplit.Length < 4)
                             throw new InvalidDataException("Vertices needs at least 3 components.");
 
-                        double.TryParse(lineSplit[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var x);
-                        double.TryParse(lineSplit[2], NumberStyles.Float, CultureInfo.InvariantCulture, out var y);
-                        double.TryParse(lineSplit[3], NumberStyles.Float, CultureInfo.InvariantCulture, out var z);
+                        double x = double.Parse(lineSplit[1], CultureInfo.InvariantCulture);
+                        double y = double.Parse(lineSplit[2], CultureInfo.InvariantCulture);
+                        double z = double.Parse(lineSplit[3], CultureInfo.InvariantCulture);
                         readVertexList.Add(new Vector3d(x, y, z));
                         
                         if (x < minX) minX = x; else if (x > maxX) maxX = x;
@@ -351,9 +352,9 @@ namespace Obj2Tiles.Stages.Model
 
                         readNormalList ??= new List<Vector3>(VertexInitialCapacity);
 
-                        float.TryParse(lineSplit[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var f0);
-                        float.TryParse(lineSplit[2], NumberStyles.Float, CultureInfo.InvariantCulture, out var f1);
-                        float.TryParse(lineSplit[3], NumberStyles.Float, CultureInfo.InvariantCulture, out var f2);
+                        float f0 = float.Parse(lineSplit[1], CultureInfo.InvariantCulture);
+                        float f1 = float.Parse(lineSplit[2], CultureInfo.InvariantCulture);
+                        float f2 = float.Parse(lineSplit[3], CultureInfo.InvariantCulture);
                         readNormalList.Add(new Vector3(f0, f1, f2));
                     }
                     else if (string.Equals(firstPart, "vt"))
@@ -363,22 +364,20 @@ namespace Obj2Tiles.Stages.Model
 
                         readTexCoordList ??= new List<Vector3>(VertexInitialCapacity);
 
-                        float f2;
-                        float.TryParse(lineSplit[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var f0);
-                        float.TryParse(lineSplit[2], NumberStyles.Float, CultureInfo.InvariantCulture, out var f1);
+                        float f2 = 0f;
+                        float f0 = float.Parse(lineSplit[1], CultureInfo.InvariantCulture);
+                        float f1 = float.Parse(lineSplit[2], CultureInfo.InvariantCulture);
                         if (lineSplit.Length > 3)
                         {
-                            float.TryParse(lineSplit[3], NumberStyles.Float, CultureInfo.InvariantCulture, out f2);
+                            //float.TryParse(lineSplit[3], NumberStyles.Float, CultureInfo.InvariantCulture, out f2);
+                            f2 = float.Parse(lineSplit[3], CultureInfo.InvariantCulture);
 
                             if (!texCoordsAre3D && f2 != 0f)
                             {
                                 texCoordsAre3D = true;
                             }
                         }
-                        else
-                        {
-                            f2 = 0f;
-                        }
+                        
 
                         readTexCoordList.Add(new Vector3(f0, f1, f2));
                     }
@@ -397,7 +396,7 @@ namespace Obj2Tiles.Stages.Model
                             int normalIndex;
                             if (slashCount == 0)
                             {
-                                int.TryParse(word, out vertexIndex);
+                                vertexIndex = int.Parse(word);
                                 vertexIndex = ShiftIndex(vertexIndex, readVertexList.Count);
                                 texIndex = -1;
                                 normalIndex = -1;
@@ -407,22 +406,25 @@ namespace Obj2Tiles.Stages.Model
                                 int splitIndex = word.IndexOf('/');
                                 string word1 = word.Substring(0, splitIndex);
                                 string word2 = word.Substring(splitIndex + 1);
-                                int.TryParse(word1, out vertexIndex);
-                                int.TryParse(word2, out texIndex);
+                                //int.TryParse(word1, out vertexIndex);
+                                //int.TryParse(word2, out texIndex);
+                                vertexIndex = int.Parse(word1);
+                                texIndex = int.Parse(word2);
                                 vertexIndex = ShiftIndex(vertexIndex, readVertexList.Count);
                                 texIndex = ShiftIndex(texIndex, readTexCoordList.Count);
                                 normalIndex = -1;
                             }
                             else if (slashCount == 2)
                             {
-                                int splitIndex1 = word.IndexOf('/');
-                                int splitIndex2 = word.IndexOf('/', splitIndex1 + 1);
-                                string word1 = word.Substring(0, splitIndex1);
-                                string word2 = word.Substring(splitIndex1 + 1, splitIndex2 - splitIndex1 - 1);
-                                string word3 = word.Substring(splitIndex2 + 1);
-                                int.TryParse(word1, out vertexIndex);
+                                string[] parts = word.Split('/');
+                                string word1 = parts[0];
+                                string word2 = parts.Length > 1 ? parts[1] : string.Empty;
+                                string word3 = parts.Length > 2 ? parts[2] : string.Empty;
+                                //int.TryParse(word1, out vertexIndex);
+                                vertexIndex = int.Parse(word1);
                                 bool hasTexCoord = int.TryParse(word2, out texIndex);
-                                int.TryParse(word3, out normalIndex);
+                                //int.TryParse(word3, out normalIndex);
+                                normalIndex = int.Parse(word3);
                                 vertexIndex = ShiftIndex(vertexIndex, readVertexList.Count);
                                 if (hasTexCoord)
                                 {
@@ -502,22 +504,22 @@ namespace Obj2Tiles.Stages.Model
                     }
                     else if (string.Equals(firstPart, "g"))
                     {
-                        string groupName = string.Join(" ", lineSplit, 1, lineSplit.Length - 1);
+                        string groupName = string.Join(' ', lineSplit.Skip(1));
                         currentGroup = groupName;
                     }
                     else if (string.Equals(firstPart, "o"))
                     {
-                        string objectName = string.Join(" ", lineSplit, 1, lineSplit.Length - 1);
+                        string objectName = string.Join(' ', lineSplit.Skip(1));
                         currentObject = objectName;
                     }
                     else if (string.Equals(firstPart, "mtllib"))
                     {
-                        string materialLibraryPath = string.Join(" ", lineSplit, 1, lineSplit.Length - 1);
+                        string materialLibraryPath = string.Join(' ', lineSplit.Skip(1));
                         materialLibraryList.Add(materialLibraryPath);
                     }
                     else if (string.Equals(firstPart, "usemtl"))
                     {
-                        string materialName = string.Join(" ", lineSplit, 1, lineSplit.Length - 1);
+                        string materialName = string.Join(' ', lineSplit.Skip(1));
                         currentMaterial = materialName;
 
                         if (triangleIndexList.Count > 0)
@@ -646,11 +648,9 @@ namespace Obj2Tiles.Stages.Model
             {
                 if (materialLibraries != null && materialLibraries.Length > 0)
                 {
-                    for (int i = 0; i < materialLibraries.Length; i++)
+                    foreach (var materialLibraryPath in materialLibraries)
                     {
-                        string materialLibraryPath = materialLibraries[i];
-                        writer.Write("mtllib ");
-                        writer.WriteLine(materialLibraryPath);
+                        writer.WriteLine($"mtllib {materialLibraryPath}");
                     }
 
                     writer.WriteLine();
@@ -674,16 +674,9 @@ namespace Obj2Tiles.Stages.Model
 
         private static void WriteVertices(TextWriter writer, Vector3d[] vertices)
         {
-            for (int i = 0; i < vertices.Length; i++)
+            foreach (var vertex in vertices)
             {
-                var vertex = vertices[i];
-                writer.Write("v ");
-                writer.Write(vertex.x.ToString("g", CultureInfo.InvariantCulture));
-                writer.Write(' ');
-                writer.Write(vertex.y.ToString("g", CultureInfo.InvariantCulture));
-                writer.Write(' ');
-                writer.Write(vertex.z.ToString("g", CultureInfo.InvariantCulture));
-                writer.WriteLine();
+                writer.WriteLine($"v {vertex.x.ToString("g", CultureInfo.InvariantCulture)} {vertex.y.ToString("g", CultureInfo.InvariantCulture)} {vertex.z.ToString("g", CultureInfo.InvariantCulture)}");
             }
         }
 
@@ -692,16 +685,9 @@ namespace Obj2Tiles.Stages.Model
             if (normals == null)
                 return;
 
-            for (int i = 0; i < normals.Length; i++)
+            foreach (var normal in normals)
             {
-                var normal = normals[i];
-                writer.Write("vn ");
-                writer.Write(normal.x.ToString("g", CultureInfo.InvariantCulture));
-                writer.Write(' ');
-                writer.Write(normal.y.ToString("g", CultureInfo.InvariantCulture));
-                writer.Write(' ');
-                writer.Write(normal.z.ToString("g", CultureInfo.InvariantCulture));
-                writer.WriteLine();
+                writer.WriteLine($"vn {normal.x.ToString("g", CultureInfo.InvariantCulture)} {normal.y.ToString("g", CultureInfo.InvariantCulture)} {normal.z.ToString("g", CultureInfo.InvariantCulture)}");
             }
         }
 
@@ -709,28 +695,16 @@ namespace Obj2Tiles.Stages.Model
         {
             if (texCoords2D != null)
             {
-                for (int i = 0; i < texCoords2D.Length; i++)
+                foreach (var texCoord in texCoords2D)
                 {
-                    var texCoord = texCoords2D[i];
-                    writer.Write("vt ");
-                    writer.Write(texCoord.x.ToString("g", CultureInfo.InvariantCulture));
-                    writer.Write(' ');
-                    writer.Write(texCoord.y.ToString("g", CultureInfo.InvariantCulture));
-                    writer.WriteLine();
+                    writer.WriteLine($"vt {texCoord.x.ToString("g", CultureInfo.InvariantCulture)} {texCoord.y.ToString("g", CultureInfo.InvariantCulture)}");
                 }
             }
             else if (texCoords3D != null)
             {
-                for (int i = 0; i < texCoords3D.Length; i++)
+                foreach (var texCoord in texCoords3D)
                 {
-                    var texCoord = texCoords3D[i];
-                    writer.Write("vt ");
-                    writer.Write(texCoord.x.ToString("g", CultureInfo.InvariantCulture));
-                    writer.Write(' ');
-                    writer.Write(texCoord.y.ToString("g", CultureInfo.InvariantCulture));
-                    writer.Write(' ');
-                    writer.Write(texCoord.z.ToString("g", CultureInfo.InvariantCulture));
-                    writer.WriteLine();
+                    writer.WriteLine($"vt {texCoord.x.ToString("g", CultureInfo.InvariantCulture)} {texCoord.y.ToString("g", CultureInfo.InvariantCulture)} {texCoord.z.ToString("g", CultureInfo.InvariantCulture)}");
                 }
             }
         }
@@ -758,76 +732,37 @@ namespace Obj2Tiles.Stages.Model
 
         private static void WriteFaces(TextWriter writer, int[] indices, bool hasTexCoords, bool hasNormals)
         {
+            StringBuilder sb = new StringBuilder();
+
             for (int i = 0; i < indices.Length; i += 3)
             {
                 int v0 = indices[i] + 1;
                 int v1 = indices[i + 1] + 1;
                 int v2 = indices[i + 2] + 1;
 
-                writer.Write("f ");
+                sb.Append("f ");
 
                 if (hasTexCoords && hasNormals)
                 {
-                    writer.Write(v0);
-                    writer.Write('/');
-                    writer.Write(v0);
-                    writer.Write('/');
-                    writer.Write(v0);
-                    writer.Write(' ');
-                    writer.Write(v1);
-                    writer.Write('/');
-                    writer.Write(v1);
-                    writer.Write('/');
-                    writer.Write(v1);
-                    writer.Write(' ');
-                    writer.Write(v2);
-                    writer.Write('/');
-                    writer.Write(v2);
-                    writer.Write('/');
-                    writer.Write(v2);
+                    sb.AppendFormat("{0}/{0}/{0} {1}/{1}/{1} {2}/{2}/{2}", v0, v1, v2);
                 }
                 else if (hasTexCoords)
                 {
-                    writer.Write(v0);
-                    writer.Write('/');
-                    writer.Write(v0);
-                    writer.Write(' ');
-                    writer.Write(v1);
-                    writer.Write('/');
-                    writer.Write(v1);
-                    writer.Write(' ');
-                    writer.Write(v2);
-                    writer.Write('/');
-                    writer.Write(v2);
+                    sb.AppendFormat("{0}/{0} {1}/{1} {2}/{2}", v0, v1, v2);
                 }
                 else if (hasNormals)
                 {
-                    writer.Write(v0);
-                    writer.Write('/');
-                    writer.Write('/');
-                    writer.Write(v0);
-                    writer.Write(' ');
-                    writer.Write(v1);
-                    writer.Write('/');
-                    writer.Write('/');
-                    writer.Write(v1);
-                    writer.Write(' ');
-                    writer.Write(v2);
-                    writer.Write('/');
-                    writer.Write('/');
-                    writer.Write(v2);
+                    sb.AppendFormat("{0}//{0} {1}//{1} {2}//{2}", v0, v1, v2);
                 }
                 else
                 {
-                    writer.Write(v0);
-                    writer.Write(' ');
-                    writer.Write(v1);
-                    writer.Write(' ');
-                    writer.Write(v2);
+                    sb.AppendFormat("{0} {1} {2}", v0, v1, v2);
                 }
 
-                writer.WriteLine();
+                sb.AppendLine();
             }
+
+            writer.Write(sb.ToString());
         }
 
         private static int ShiftIndex(int value, int count)
@@ -837,16 +772,7 @@ namespace Obj2Tiles.Stages.Model
 
         private static int CountOccurrences(string text, char character)
         {
-            int count = 0;
-            for (int i = 0; i < text.Length; i++)
-            {
-                if (text[i] == character)
-                {
-                    ++count;
-                }
-            }
-
-            return count;
+            return text.Count(c => c == character);
         }
 
         #endregion
